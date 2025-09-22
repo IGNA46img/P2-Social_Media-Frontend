@@ -4,8 +4,8 @@ import authService from "./authService";
 const initialState = {
   user: null,
   token: localStorage.getItem("token"),
-  error: null,
   profile: null,
+  loading: false,
 };
 
 export const authSlice = createSlice({
@@ -18,10 +18,10 @@ export const authSlice = createSlice({
         state.token = action.payload.data;
       })
       .addCase(register.fulfilled, (state, action) => {
-        state.success = true;
+        state.loading = false;
       })
-      .addCase(register.rejected, (state, action) => {
-        state.error = action.payload.message;
+      .addCase(register.pending, (state, action) => {
+        state.loading = true;
       })
       .addCase(getUserInfo.fulfilled, (state, action) => {
         state.user = action.payload.data;
@@ -38,13 +38,18 @@ export const authSlice = createSlice({
   },
 });
 
-export const register = createAsyncThunk("auth/register", async (user) => {
-  try {
-    return await authService.register(user);
-  } catch (error) {
-    console.log(error);
+export const register = createAsyncThunk(
+  "auth/register",
+  async (user, { rejectWithValue }) => {
+    try {
+      return await authService.register(user);
+    } catch (error) {
+      return rejectWithValue(
+        error.response.data.message || error.message || "Something went wrong"
+      );
+    }
   }
-});
+);
 
 export const login = createAsyncThunk("auth/login", async (user) => {
   try {
