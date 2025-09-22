@@ -11,7 +11,8 @@ import {
 } from "../../redux/posts/postSlice";
 import ReplyList from "./ReplyList";
 import GoBack from "../goback/GoBack";
-import { HeartFilled, HeartOutlined } from "@ant-design/icons";
+import { HeartFilled, HeartOutlined, DeleteOutlined } from "@ant-design/icons";
+import Overlay from "../overlay/Overlay";
 
 const Post = () => {
   const { postid } = useParams();
@@ -21,6 +22,7 @@ const Post = () => {
   const { user } = useSelector((state) => state.auth);
   const [dateString, setDate] = useState("");
   const [liked, setLiked] = useState(false);
+  const [overlay, setOverlay] = useState(false);
 
   const like = () => {
     dispatch(likePost({ id: post._id, like: !post.likes.includes(user._id) }));
@@ -61,6 +63,11 @@ const Post = () => {
     if (user && post) setLiked(post.likes.includes(user._id));
   }, [user, post]);
 
+  const handleOpenImg = (e) => {
+    e.stopPropagation();
+    setOverlay(true);
+  };
+
   return (
     <>
       <GoBack text="Post" />
@@ -84,7 +91,12 @@ const Post = () => {
             <div className="postBody">
               <h3>{post.title}</h3>
               <p>{post.text}</p>
-              {post.image && <img src={`${API_URL}/media/${post._id}`} />}
+              {post.image && (
+                <img
+                  onClick={handleOpenImg}
+                  src={`${API_URL}/media/${post._id}`}
+                />
+              )}
               <span>{dateString}</span>
             </div>
             <div className="postButtons">
@@ -111,6 +123,11 @@ const Post = () => {
             <input className="replyButton" type="submit" value="Reply" />
           </form>
           <ReplyList posts={post.comments} />
+          {overlay && (
+            <Overlay onClose={() => setOverlay(false)}>
+              <img src={`${API_URL}/media/${post._id}`} />
+            </Overlay>
+          )}
         </div>
       )}
     </>
